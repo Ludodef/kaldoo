@@ -7,6 +7,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -26,16 +27,30 @@ public class WooCommerceClient {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<Map<String, Object>> getProdotti() {
-        String url = UriComponentsBuilder.fromHttpUrl(wooApiUrl + "/products")
-                .queryParam("per_page", 10)
-                .toUriString();
+        List<Map<String, Object>> tuttiProdotti = new ArrayList<>();
+        int page = 1;
+        while (true) {
+            String url = UriComponentsBuilder.fromHttpUrl(wooApiUrl + "/products")
+                    .queryParam("per_page", 100)
+                    .queryParam("page", page)
+                    .toUriString();
 
-        HttpHeaders headers = buildAuthHeader();
-        HttpEntity<String> entity = new HttpEntity<>(headers);
+            HttpHeaders headers = buildAuthHeader();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<List> response = restTemplate.exchange(url, HttpMethod.GET, entity, List.class);
-        return response.getBody();
+            ResponseEntity<List> response = restTemplate.exchange(url, HttpMethod.GET, entity, List.class);
+            List<Map<String, Object>> prodotti = response.getBody();
+
+            if (prodotti == null || prodotti.isEmpty()) {
+                break;
+            }
+
+            tuttiProdotti.addAll(prodotti);
+            page++;
+        }
+        return tuttiProdotti;
     }
+
 
     public void aggiornaStock(int productId, int newStock) {
         String url = wooApiUrl + "/products/" + productId;
@@ -47,6 +62,8 @@ public class WooCommerceClient {
         HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
         restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+
+        System.out.println("Stock aggiornato per prodotto ID " + productId + " a: " + newStock);
     }
 
     private HttpHeaders buildAuthHeader() {

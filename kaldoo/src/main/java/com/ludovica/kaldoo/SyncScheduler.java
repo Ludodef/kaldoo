@@ -12,7 +12,7 @@ class SyncScheduler {
         this.syncService = syncService;
     }
 
-    @Scheduled(fixedRate = 30000) // ogni ora
+    @Scheduled(fixedRate = 30000) // ogni ora cron = "0 0 * * * *"
     public void scheduledSync() {
         syncService.sincronizzaProdotti();
     }

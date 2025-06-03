@@ -19,16 +19,18 @@ public class SyncService {
     public void sincronizzaProdotti() {
         List<Map<String, Object>> prodotti = wooCommerceClient.getProdotti();
         for (Map<String, Object> prodotto : prodotti) {
+            String nome = (String) prodotto.get("name");
             String sku = (String) prodotto.get("sku");
+            Integer id = (Integer) prodotto.get("id");
+            Integer stockWoo = (Integer) prodotto.get("stock_quantity");
+
             if (sku != null && !sku.isEmpty()) {
-                // Simula stock dal gestionale (mock)
                 int stockDalGestionale = gestionaleClient.getStockBySku(sku);
 
-                System.out.println("Prodotto: " + prodotto.get("name") +
-                        ", SKU: " + sku +
-                        ", Quantità attuale: " + prodotto.get("stock_quantity") +
-                        ", Quantità gestionale: " + stockDalGestionale);
-                wooCommerceClient.aggiornaStock((Integer) prodotto.get("id"), stockDalGestionale);
+                System.out.printf("Prodotto: %s | SKU: %s | Woo: %d | Gestionale: %d%n",
+                        nome, sku, stockWoo, stockDalGestionale);
+
+                wooCommerceClient.aggiornaStock(id, stockDalGestionale);
             }
         }
     }
